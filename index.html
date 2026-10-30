@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>近十年全球艺术热点</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: #FFFFFF;
+    color: #4A4A4A;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body { display: flex; align-items: center; justify-content: center; }
+
+  button { font: inherit; background: none; border: none; cursor: pointer; color: inherit; padding: 0; }
+  a { text-decoration: none; color: inherit; }
+
+  /* ============ 手机舞台 ============ */
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    height: 100dvh;
+    background: #FFFFFF;
+    overflow: hidden;
+  }
+  @media (min-width: 480px) {
+    .stage {
+      height: min(100dvh, 900px);
+      box-shadow: 0 0 80px rgba(0, 0, 0, .06);
+    }
+  }
+
+  /* ============ 图层 ============ */
+  .layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    transition: filter .45s cubic-bezier(.4,0,.2,1),
+                opacity .45s cubic-bezier(.4,0,.2,1),
+                transform .45s cubic-bezier(.4,0,.2,1),
+                visibility .45s;
+    will-change: filter, opacity, transform;
+  }
+
+  .layer.depth-0 { filter: none; opacity: 1; transform: none; pointer-events: auto; visibility: visible; z-index: 30; }
+  .layer.depth-1 { filter: blur(8px); opacity: .30; transform: scale(.98); pointer-events: none; visibility: visible; z-index: 20; }
+  .layer.depth-2 { filter: blur(13px); opacity: .16; transform: scale(.96); pointer-events: none; visibility: visible; z-index: 10; }
+  .layer.is-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+
+  /* ============ 开屏 ============ */
+  #splash {
+    z-index: 60;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  #splash h1 {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: .16em;
+    font-size: clamp(11.5px, 3.3vw, 23.6px);
+    font-weight: 600;
+    color: #000000;
+    text-align: center;
+    animation: breathe 1.6s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: .55; transform: scale(.97); }
+    50%      { opacity: 1;   transform: scale(1.03); }
+  }
+
+  /* ============ 地域关系图 ============ */
+  #mapLayer {
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+  }
+  .map-wrap {
+    width: min(84%, 52vh);
+    aspect-ratio: 1 / 1;
+    position: relative;
+  }
+  .map {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border: 1px solid #C8C8C8;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+  .ring-world { width: 100%; height: 100%; animation: radar 1.9s ease-in-out infinite; animation-delay: .9s; }
+  .ring-asia  { width: 75%;  height: 75%;  animation: radar 1.9s ease-in-out infinite; animation-delay: .6s; }
+  .ring-cn    { width: 50%;  height: 50%;  animation: radar 1.9s ease-in-out infinite; animation-delay: .3s; }
+  .ring-gba   { width: 25%;  height: 25%;  animation: radar 1.9s ease-in-out infinite; animation-delay: 0s; }
+
+  @keyframes radar {
+    0%   { transform: translate(-50%, -50%) scale(1);    opacity: .28; }
+    45%  { transform: translate(-50%, -50%) scale(1.055); opacity: 1;   }
+    100% { transform: translate(-50%, -50%) scale(1);    opacity: .28; }
+  }
+
+  .ring-label {
+    position: absolute;
+    left: 50%;
+    text-align: center;
+    color: #000000;
+    font-weight: 600;
+    font-size: clamp(12px, 3.5vw, 18.7px);
+    line-height: 1.25;
+    white-space: nowrap;
+    pointer-events: none;
+    letter-spacing: .04em;
+  }
+  .ring-label span {
+    display: block;
+    font-size: .52em;
+    font-weight: 400;
+    color: #7A7A7A;
+    letter-spacing: .14em;
+    margin-top: 3px;
+  }
+  .label-world { top: 6.25%;  transform: translate(-50%, -50%); }
+  .label-asia  { top: 18.75%; transform: translate(-50%, -50%); }
+  .label-cn    { top: 31.25%; transform: translate(-50%, -50%); }
+  .label-gba   { top: 43.75%; transform: translate(-50%, -50%); }
+
+  /* ============ 顶部栏 ============ */
+  .topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 10px;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-bottom: 1px solid #F4F4F4;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(13.2px, 3.5vw, 15.4px);
+    color: #4A4A4A;
+    padding: 6px 4px 6px 0;
+    letter-spacing: .04em;
+    flex: 0 0 auto;
+  }
+  .back-btn svg { display: block; }
+  .back-btn:active { opacity: .55; }
+  .crumb {
+    font-size: clamp(12.6px, 3.5vw, 15.4px);
+    color: #000000;
+    font-weight: 600;
+    letter-spacing: .02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* ============ 滚动区 ============ */
+  .scroll-area {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 12px calc(env(safe-area-inset-bottom, 0px) + 60px);
+    position: relative;
+  }
+
+  /* ============ 话题分布区 ============ */
+  .topics-cloud {
+    position: relative;
+    width: 100%;
+    height: calc(100dvh - 170px);
+    min-height: 460px;
+  }
+
+  .topic-slot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 44%;
+    max-width: 195px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .topic-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 5px;
+    padding: 6px 4px;
+    width: 100%;
+    animation: shake var(--dur, 1.3s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+    will-change: transform;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity .2s;
+  }
+  .topic-item:active { opacity: .5; }
+
+  .topic-code {
+    font-size: clamp(15.84px, 4.8vw, 19.8px);
+    font-weight: 800;
+    color: #000000;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .topic-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    line-height: 1.55;
+    letter-spacing: .02em;
+    color: #4A4A4A;
+    font-weight: 500;
+  }
+  .topic-title span { display: block; }
+
+  .weight-3 .topic-title { font-size: clamp(11px, 3.2vw, 16px); }
+  .weight-2 .topic-title { font-size: clamp(10px, 2.8vw, 13.7px); }
+  .weight-1 .topic-title { font-size: clamp(8.8px, 2.4vw, 12px); }
+
+  @keyframes shake {
+    0%   { transform: translateY(0) rotate(0deg); }
+    22%  { transform: translateY(var(--amp, -7px)) rotate(-.4deg); }
+    50%  { transform: translateY(0) rotate(0deg); }
+    76%  { transform: translateY(calc(var(--amp, -7px) * -0.55)) rotate(.4deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+  }
+
+  /* ============ 案例词云 ============ */
+  .cases-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px 12px;
+    padding: 4px 0 40px;
+    min-height: calc(100dvh - 180px);
+  }
+  .case-item {
+    display: block;
+    flex: 1 1 calc(50% - 14px);
+    max-width: 320px;
+    min-width: 130px;
+    text-align: left;
+    padding: 12px 8px 12px 11px;
+    border-left: 1px solid #E6E6E6;
+    animation: shake var(--dur, 1.6s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+    will-change: transform;
+    margin-top: var(--mt, 0px);
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity .2s;
+    cursor: pointer;
+  }
+  .case-item:active { opacity: .5; }
+  .case-org {
+    display: block;
+    font-size: clamp(11px, 3vw, 12.6px);
+    color: #8A8A8A;
+    margin-bottom: 4px;
+    letter-spacing: .03em;
+    font-weight: 400;
+  }
+  .case-name {
+    display: block;
+    font-size: clamp(13.7px, 3.8vw, 16.5px);
+    color: #4A4A4A;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+
+  /* ============ 减少动效 ============ */
+  @media (prefers-reduced-motion: reduce) {
+    .ring, #splash h1, .topic-item, .case-item {
+      animation: none !important;
+    }
+    .layer { transition-duration: .15s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <!-- 开屏 -->
+  <section class="layer depth-0" id="splash" aria-label="开屏">
+    <h1>近十年全球艺术热点</h1>
+  </section>
+
+  <!-- 地域关系图 -->
+  <section class="layer is-hidden" id="mapLayer" aria-label="地域关系图">
+    <div class="map-wrap">
+      <div class="map" id="map" role="group" aria-label="地域同心圆">
+        <div class="ring ring-world"></div>
+        <div class="ring ring-asia"></div>
+        <div class="ring ring-cn"></div>
+        <div class="ring ring-gba"></div>
+
+        <div class="ring-label label-world">世界<span>WORLD</span></div>
+        <div class="ring-label label-asia">亚洲<span>ASIA</span></div>
+        <div class="ring-label label-cn">中国<span>CHINA</span></div>
+        <div class="ring-label label-gba">大湾区<span>GBA</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 话题词云 -->
+  <section class="layer is-hidden" id="topicsLayer" aria-label="议题"></section>
+
+  <!-- 案例词云 -->
+  <section class="layer is-hidden" id="casesLayer" aria-label="案例"></section>
+
+</div>
+
+<script>
+/* =========================================================
+   数据层：完整链接（已更新16处链接）
+   ========================================================= */
+const DATA = {
+  regions: [
+    {
+      id: 'gba', name: '大湾区', en: 'GBA',
+      topics: [
+        {
+          id: 'gba1', code: 'GBA 1',
+          lines: ['湾区文化身份、', '区域历史', '与跨境流动'],
+          weight: 3,
+          cases: [
+            { org: '广东美术馆', name: '粤港澳大湾区当代艺术展', link: 'https://www.gdmoa.org/Exhibition/Exhibitions/2025/202508/t20250828_18117.shtml' },
+            { org: 'M+', name: '香港：此地彼方', link: 'https://www.mplus.org.hk/en/exhibitions/hong-kong-here-and-beyond/' },
+            { org: 'M+', name: '廣東摩登：藝術與視覺文化，1900至1970年代', link: 'https://www.mplus.org.hk/en/exhibitions/canton-modern-art-and-visual-culture/' },
+            { org: '澳门艺术博物馆', name: '新像—艺博馆藏现当代艺术展', link: 'https://www.mam.gov.mo/gb/exhibition/1714' },
+            { org: '艺术新闻', name: '多元引力场—塑形中的大湾区艺术网络', link: 'https://www.theartjournal.cn/features/143277' }
+          ]
+        },
+        {
+          id: 'gba2', code: 'GBA 2',
+          lines: ['城市化、', '空间更新', '与日常生活'],
+          weight: 2,
+          cases: [
+            { org: '', name: '深港城市\\建筑双城双年展', link: 'https://www.uabb-sz.com/' },
+            { org: 'M+', name: '物件·空間·互動', link: 'https://www.mplus.org.hk/en/exhibitions/things-spaces-interactions/' },
+            { org: 'M+', name: 'M+希克藏品：城事浮生', link: 'https://www.mplus.org.hk/en/exhibitions/m-sigg-collection-city-lives/' },
+            { org: 'M+', name: 'M+希克藏品：从大革命到全球化', link: 'https://www.mplus.org.hk/en/exhibitions/m-sigg-collection-from-revolution-to-globalisation/' }
+          ]
+        },
+        {
+          id: 'gba3', code: 'GBA 3',
+          lines: ['美术馆的“在地叙事”', '与“全球南方”', '机构实践'],
+          weight: 3,
+          cases: [
+            { org: '广东时代美术馆', name: '“一路向南”驻地研究计划', link: 'https://mp.weixin.qq.com/s/mwPCBrpzH9wBRRbl27MgEw' },
+            { org: '广东美术馆', name: '城市链：风起南方的艺术实验大展', link: 'https://www.gdmoa.org/Exhibition/Exhibitions/2025/202404/t20240427_17410.shtml' },
+            { org: '广东美术馆', name: '奥斯瓦尔多·维加斯回顾展——心外无物', link: 'https://www.gdmoa.org/Exhibition/Exhibitions/2026/202608/t20260810_18411.shtml' },
+            { org: '和美术馆', name: '根系比罗盘更清楚方向', link: 'https://mp.weixin.qq.com/s/ZVh9YZNyC5rObiZ2Vf-QQQ' },
+            { org: '阿那亚艺术中心广州馆', name: '2026秋季群展计划“向地而生”', link: 'https://mp.weixin.qq.com/s/os2nYjs-I_YRtY5u-OGp-w' },
+            { org: '艺术新闻', name: '多元引力场—塑形中的大湾区艺术网络', link: 'https://www.theartjournal.cn/features/143277' }
+          ]
+        },
+        {
+          id: 'gba4', code: 'GBA 4',
+          lines: ['当代水墨', '与传统媒介的', '跨地域转译'],
+          weight: 2,
+          cases: [
+            { org: '香港艺术推广办事处', name: '水墨异重奏', link: 'https://www.apo.hk/sc/web/apo/there_ink_art_ensembles.html' },
+            { org: '亚洲协会香港中心', name: '“Celebration of Ink 水墨庆典”系列展览', link: 'https://asiasociety.org/hong-kong/exhibitions/hung-hsien-between-worlds' },
+            { org: '广东美术馆', name: '诗书画印：水墨的内景——第四届当代水墨空间展', link: 'https://www.gdmoa.org/Exhibition/Exhibitions/2025/202501/t20250109_17922.shtml' },
+            { org: '广东美术馆', name: '未完成的未来——中国当代水墨年鉴十周年', link: 'https://www.gdmoa.org/Exhibition/Exhibitions/2026/202609/t20260923_18442.shtml' },
+            { org: '深圳美术馆', name: '墨在东方——当代水墨艺术展', link: 'https://mp.weixin.qq.com/s/3aAsNPe-MuPBEdCmOTTifQ' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'cn', name: '中国', en: 'CHINA',
+      topics: [
+        {
+          id: 'cn1', code: 'CN 1',
+          lines: ['大地艺术、', '艺术乡建', '与在地文化'],
+          weight: 3,
+          cases: [
+            { org: '', name: '碧山计划', link: 'https://mp.weixin.qq.com/s/c6oAJMunY0k1xZVFRAKSZw' },
+            { org: '', name: '许村乡村国际艺术节', link: 'https://mp.weixin.qq.com/s/WT_OJispr5w7chkVP5536w' },
+            { org: '', name: '艺术在浮梁', link: 'https://mp.weixin.qq.com/s/AWt1xIb8bSjzE8MZ5JPFcw' },
+            { org: '', name: '广安田野双年展', link: 'https://mp.weixin.qq.com/s/81gFgUUd7AEI29GXoQCXXw' },
+            { org: '', name: '武隆懒坝国际大地艺术季', link: 'https://mp.weixin.qq.com/s/-ZQZxiI9qMmp3wDbPpJ3bQ' },
+            { org: '', name: '原乡大地艺术节', link: 'https://mp.weixin.qq.com/s/6XwN48rnoJrMmAu5ckftiQ' },
+            { org: '', name: '阿那亚大地艺术节', link: 'https://mp.weixin.qq.com/s/7rxEDeKc88vBAwhuL_ZGng' },
+            { org: '', name: '广东南海大地艺术节', link: 'https://mp.weixin.qq.com/s/JQwUX5H_liFNP_JCMOZUow' },
+            { org: '', name: '罗行艺术墟', link: 'https://mp.weixin.qq.com/s/g67aooggRURIZAbbNEUFjA' },
+            { org: '', name: '广东蕉岭大地艺术季', link: 'https://mp.weixin.qq.com/s/UMN6wgXP3kuRlxRjrBeC7A' },
+            { org: '', name: '关中忙罢艺术节', link: 'https://mp.weixin.qq.com/s/W00dYa4xl_T0_VuIc3uitA' },
+            { org: '', name: '大地显影桃仙大地艺术节', link: 'https://mp.weixin.qq.com/s/DGP2PTS4vkaJrJkM7-IfBA' },
+            { org: '', name: '莽山·森林大地艺术节', link: 'https://mp.weixin.qq.com/s/wzmnozf1Y706jFVxGul6Fg' },
+            { org: '', name: '柯桥艺术行旅', link: 'https://mp.weixin.qq.com/s/PUNAiUrrqlg_JWH0tVMowQ' }
+          ]
+        },
+        {
+          id: 'cn2', code: 'CN 2',
+          lines: ['“全球在地化”下的', '主体性建构'],
+          weight: 2,
+          cases: [
+            { org: 'M+', name: 'M+希克藏品：别传', link: 'https://www.mplus.org.hk/sc/exhibitions/m-sigg-collection-another-story/' },
+            { org: 'M+', name: 'M+希克藏品：从大革命到全球化', link: 'https://www.mplus.org.hk/en/exhibitions/m-sigg-collection-from-revolution-to-globalisation/' },
+            { org: '大馆当代美术馆', name: '“保持在線：2008年後的藝術與中國”系列', link: 'https://www.taikwun.hk/zh/whats-on/detail/sta-connected-supplying-the-globe/1714' },
+            { org: '中国当代艺术年鉴', name: '中国当代艺术年鉴展 2014–2024', link: 'http://art.china.cn/txt/2024-12/18/content_42991900.htm' }
+          ]
+        },
+        {
+          id: 'cn3', code: 'CN 3',
+          lines: ['艺术机构新生态、', '公共生活', '与艺术的社会角色'],
+          weight: 2,
+          cases: [
+            { org: '上海当代艺术博物馆', name: '第十一届上海双年展｜何不再问：正辩、反辩、故事', link: 'https://mp.weixin.qq.com/s/qYf25gPo9IGwpJ-faEdgaA' },
+            { org: '', name: '中国当代艺术年鉴展（上海）2024', link: 'https://mp.weixin.qq.com/s/lMT1Lyocy6EzUnqU46EKHw' },
+            { org: '广东美术馆', name: '城市链：风起南方的艺术实验大展', link: 'https://www.gdmoa.org/Exhibition/Exhibitions/2025/202404/t20240427_17410.shtml' },
+            { org: '艺术新闻', name: '差异与重连：都市社区中的成都艺术生态再讨论', link: 'https://www.theartjournal.cn/features/127178' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'asia', name: '亚洲', en: 'ASIA',
+      topics: [
+        {
+          id: 'as1', code: 'AS 1',
+          lines: ['去殖民化', '与全球南方的', '艺术史'],
+          weight: 3,
+          cases: [
+            { org: '横滨三年展', name: 'Islands, Constellations and Galapagos', link: 'https://www.yokohamatriennale.jp/english/2017/concept.html' },
+            { org: '沙迦双年展 15', name: 'Thinking Historically in the Present', link: 'https://www.sharjahart.org/en/resources/publications/details/sharjah-biennial-15-thinking-historically-in-the-present' },
+            { org: '威尼斯双年展 2024', name: 'Foreigners Everywhere', link: 'https://www.labiennale.org/en/art/2024/introduction-adriano-pedrosa' },
+            { org: '新加坡国家美术馆', name: 'Tropical: Stories from Southeast Asia and Latin America', link: 'https://www.nationalgallery.sg/sg/en/about/media-centre/national-gallery-singapore-presents-tropical-world-s-first-major-comparative-exhibition-on-southeast-asian-and-latin-american-art.html' },
+            { org: '新加坡国家美术馆', name: 'Passion is Volcanic: Desire in Southeast Asian Art', link: 'https://www.nationalgallery.sg/sg/en/exhibitions/Passion-is-Volcanic-Desire-in-Southeast-Asian-Art.html' },
+            { org: 'documenta', name: 'documenta 15', link: 'https://documenta.de/en/retrospective/documenta-fifteen' }
+          ]
+        },
+        {
+          id: 'as2', code: 'AS 2',
+          lines: ['传统文化、', '民间文化', '与知识体系'],
+          weight: 2,
+          cases: [
+            { org: '新加坡国家美术馆', name: 'Between Declarations and Dreams: Art of Southeast Asia since the 19th Century', link: 'https://www.nationalgallery.sg/sg/en/exhibitions/between-declarations-and-dreams-art-of-southeast-asia-since-the-19th-century.html' },
+            { org: '光州双年展', name: 'PANSORI: A Soundscape of the 21st Century', link: 'https://www.15gwangjubiennale.com/en' },
+            { org: 'Art Basel', name: 'Living traditions: remixing heritage to challenge old stories', link: 'https://www.artbasel.com/stories/art-basel-announces-further-highlights-for-its-2025-edition-in-hong-kong' },
+            { org: 'Art Basel', name: 'Monumental artworks revive ancestral traditions at Art Basel Hong Kong', link: 'https://www.artbasel.com/stories/art-basel-hong-kong-encounters-alexie-glass-cantor' }
+          ]
+        },
+        {
+          id: 'as3', code: 'AS 3',
+          lines: ['性别政治、', '女性主义', '与身体自主'],
+          weight: 3,
+          cases: [
+            { org: '森美术馆', name: 'Another Energy: Power to Continue Challenging—16 Women Artists from Around the World', link: 'https://www.mori.art.museum/en/exhibitions/anotherenergy/' },
+            { org: '韩国国立现代美术馆', name: 'Connecting Bodies: Asian Women Artists', link: 'https://www.mmca.go.kr/eng/exhibitions/exhibitionsDetail.do?exhFlag=2&exhId=202403220001771' },
+            { org: '高雄市立美术馆', name: 'Pearl—Southern Visions of Women Artists', link: 'https://www.kmfa.gov.tw/English/ExhibitionDetailE001100.aspx?Cond=7e80a7b7-e8ea-4ffd-aec1-2569a843ca5a' },
+            { org: '新加坡国家美术馆', name: 'Fear No Power: Women Imagining Otherwise', link: 'https://www.nationalgallery.sg/sg/en/exhibitions/Fear-no-power.html' }
+          ]
+        },
+        {
+          id: 'as4', code: 'AS 4',
+          lines: ['快速城市化、', '基础设施', '与劳动者的隐形生活'],
+          weight: 2,
+          cases: [
+            { org: '波士顿美术博物馆', name: 'Megacities Asia', link: 'https://www.mfa.org/exhibitions/megacities-asia' },
+            { org: '新加坡双年展', name: 'Singapore Biennale 2016: An Atlas of Mirrors', link: 'https://singaporeartmuseum.sg/Art-Events/Exhibitions/Singapore-Biennale-2016' },
+            { org: '新加坡艺术博物馆', name: 'Everyday Practices', link: 'https://www.singaporeartmuseum.sg/Art-Events/Exhibitions/Everyday-Practices' },
+            { org: '首尔市立美术馆', name: '80 Urban Reality', link: 'https://sema.seoul.go.kr/en/whatson/exhibition/detail?exNo=1168674' },
+            { org: '森美术馆', name: 'MAM Collection 005: Recycle and Build', link: 'https://www.mori.art.museum/en/exhibitions/mamcollection005/index.html' },
+            { org: 'MoMA', name: 'The Many Lives of the Nakagin Capsule Tower', link: 'https://production-gcp.moma.org/calendar/exhibitions/5830' },
+            { org: '曼谷艺术文化中心', name: 'Melting Map', link: 'https://www.bacc.or.th/en/events/88597' }
+          ]
+        },
+        {
+          id: 'as5', code: 'AS 5',
+          lines: ['记忆、档案', '与被忽略的历史', '如何重新进入当代艺术'],
+          weight: 2,
+          cases: [
+            { org: '新加坡艺术博物馆', name: 'Lost & Found: Embodied Archive', link: 'https://www.singaporeartmuseum.sg/Art-Events/Exhibitions/Embodied-Archive' },
+            { org: '新加坡国家美术馆', name: 'Art Remembers', link: 'https://www.nationalgallery.sg/sg/en/exhibitions/Art-Remembers.html' },
+            { org: '新加坡艺术博物馆', name: 'Everyday Practices', link: 'https://www.singaporeartmuseum.sg/Art-Events/Exhibitions/Everyday-Practices' },
+            { org: '首尔市立美术馆', name: 'Into Other Rivers', link: 'https://sema.seoul.go.kr/en/whatson/exhibition/detail?exNo=1376277' },
+            { org: '曼谷艺术文化中心', name: 'LOCAL MYTHS: The Intrinsic Aesthetic', link: 'https://www.bacc.or.th/en/events/87025' },
+            { org: 'X Museum', name: '我在这里！见证一座城市和两亿人', link: 'https://xmuseum.org/exhibition/%e6%88%91%e5%9c%a8%ef%bc%81%e4%b8%80%e5%ba%a7%e5%9f%8e%e5%92%8c%e4%b8%a4%e4%ba%bf%e4%ba%ba%e7%9a%84%e5%9c%a8%e5%9c%ba%e8%af%81%e6%98%8e/' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'world', name: '世界', en: 'WORLD',
+      topics: [
+        {
+          id: 'gl1', code: 'GL 1',
+          lines: ['殖民历史、', '迁徙', '与身份政治'],
+          weight: 3,
+          cases: [
+            { org: '第60届威尼斯双年展', name: 'Foreigners Everywhere 处处都是外人', link: 'https://www.labiennale.org/en/art/2024/introduction-adriano-pedrosa' },
+            { org: '沙迦双年展 15', name: 'Thinking Historically in the Present', link: 'https://www.sharjahart.org/en/resources/publications/details/sharjah-biennial-15-thinking-historically-in-the-present' },
+            { org: 'documenta', name: 'documenta 14', link: 'https://documenta.de/en/retrospective/documenta-14' },
+            { org: 'documenta', name: 'documenta 15', link: 'https://documenta.de/en/retrospective/documenta-fifteen' }
+          ]
+        },
+        {
+          id: 'gl2', code: 'GL 2',
+          lines: ['新技术、', '体制性挑战、', '作者身份与真实性'],
+          weight: 3,
+          cases: [
+            { org: '惠特尼双年展', name: '惠特尼双年展 2024', link: 'https://whitney.org/exhibitions/2024-biennial' },
+            { org: 'Art Basel', name: '艺术家如何理解 AI 与技术', link: 'https://www.artbasel.com/stories/what-are-artists-learning-from-tech-and-ai-today' },
+            { org: 'Art Basel', name: 'Art and Tech 专题', link: 'https://www.artbasel.com/stories/art-and-tech' },
+            { org: 'ArtReview', name: 'How New Technologies Are Contesting the Museum Model', link: 'https://artreview.com/how-new-technologies-are-contesting-the-museum-model/' },
+            { org: 'Artnet News', name: 'How the Debates Over Art, Race, and Tech Have Changed', link: 'https://news.artnet.com/multimedia/aria-dean-art-race-tech-2740206' },
+            { org: 'Art Basel Conversations', name: 'Technology: Expanding, or Erasing, the Art World?', link: 'https://www.artbasel.com/stories/technology-expanding-or-erasing-the-art-world?lang-en' }
+          ]
+        },
+        {
+          id: 'gl3', code: 'GL 3',
+          lines: ['气候危机、', '生态正义', '与艺术机构的可持续性'],
+          weight: 2,
+          cases: [
+            { org: '第十五届上海双年展', name: '花儿听到蜜蜂了吗？', link: 'https://www.powerstationofart.com/whats-on/programs/shanghai-biennale/home' },
+            { org: '光州双年展', name: 'PANSORI: A Soundscape of the 21st Century', link: 'https://www.15gwangjubiennale.com/en' },
+            { org: 'Art Basel', name: 'Art & Ecology 专题', link: 'https://www.artbasel.com/stories/art-and-ecology' }
+          ]
+        },
+        {
+          id: 'gl4', code: 'GL 4',
+          lines: ['身体政治、', '性别流动', '与身份的自我表达'],
+          weight: 3,
+          cases: [
+            { org: '第59届威尼斯国际艺术双年展', name: 'The Milk of Dreams', link: 'https://www.labiennale.org/en/news/biennale-arte-2022-milk-dreams' },
+            { org: 'MoMA', name: 'Vital Signs: Artists and the Body', link: 'https://www.moma.org/calendar/exhibitions/5725' },
+            { org: 'MoMA', name: 'Taking Back Our Space: Photographic Perspectives', link: 'https://www.moma.org/calendar/exhibitions/5678' },
+            { org: 'Fotografiska Berlin', name: 'NUDE: The Naked Body in Contemporary Photography', link: 'https://berlin.fotografiska.com/de/exhibitions/nude' }
+          ]
+        },
+        {
+          id: 'gl5', code: 'GL 5',
+          lines: ['劳动、照护', '与资本主义社会中的', '个体处境'],
+          weight: 3,
+          cases: [
+            { org: 'Tate', name: 'Women in Revolt! Art and Activism in the UK 1970–1990', link: 'https://www.tate.org.uk/whats-on/tate-britain/women-in-revolt/exhibition-guide' },
+            { org: 'MoMA', name: 'LaToya Ruby Frazier: Monuments of Solidarity', link: 'https://www.moma.org/calendar/exhibitions/5574' },
+            { org: 'Whitney Museum', name: 'Mierle Laderman Ukeles: I Make Maintenance Art One Hour Every Day', link: 'https://whitney.org/events/mierle-laderman-ukeles-talk' },
+            { org: 'The Met', name: 'Art for the Millions: American Culture and Politics in the 1930s', link: 'https://www.metmuseum.org/zh/exhibitions/art-for-the-millions' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+/* =========================================================
+   工具
+   ========================================================= */
+const rand = (a, b) => a + Math.random() * (b - a);
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]
+  ));
+}
+
+function searchUrl(c) {
+  const q = [c.org, c.name].filter(Boolean).join(' ');
+  return 'https://www.google.com/search?q=' + encodeURIComponent(q);
+}
+
+function joinTitle(lines) {
+  return lines.map(escapeHtml).join('');
+}
+
+/* 话题槽位分配 */
+function getSlotPositions(count) {
+  if (count === 1) return [{ l: 50, t: 50 }];
+  if (count === 2) return [{ l: 28, t: 28 }, { l: 72, t: 72 }];
+  if (count === 3) return [{ l: 27, t: 26 }, { l: 73, t: 50 }, { l: 42, t: 78 }];
+  if (count === 4) return [{ l: 27, t: 25 }, { l: 73, t: 25 }, { l: 27, t: 75 }, { l: 73, t: 75 }];
+  if (count === 5) return [
+    { l: 50, t: 14 },
+    { l: 20, t: 42 },
+    { l: 80, t: 42 },
+    { l: 32, t: 80 },
+    { l: 68, t: 80 }
+  ];
+  return null;
+}
+
+/* =========================================================
+   状态 & 图层
+   ========================================================= */
+const state = { view: 'splash', region: null, topic: null };
+
+const el = id => document.getElementById(id);
+const splashEl = el('splash');
+const mapLayerEl = el('mapLayer');
+const topicsLayerEl = el('topicsLayer');
+const casesLayerEl = el('casesLayer');
+
+function render() {
+  const all = [splashEl, mapLayerEl, topicsLayerEl, casesLayerEl];
+  all.forEach(n => n.classList.remove('depth-0', 'depth-1', 'depth-2', 'is-hidden'));
+
+  switch (state.view) {
+    case 'splash':
+      splashEl.classList.add('depth-0');
+      mapLayerEl.classList.add('is-hidden');
+      topicsLayerEl.classList.add('is-hidden');
+      casesLayerEl.classList.add('is-hidden');
+      break;
+    case 'map':
+      splashEl.classList.add('is-hidden');
+      mapLayerEl.classList.add('depth-0');
+      topicsLayerEl.classList.add('is-hidden');
+      casesLayerEl.classList.add('is-hidden');
+      break;
+    case 'topics':
+      splashEl.classList.add('is-hidden');
+      mapLayerEl.classList.add('depth-1');
+      topicsLayerEl.classList.add('depth-0');
+      casesLayerEl.classList.add('is-hidden');
+      break;
+    case 'cases':
+      splashEl.classList.add('is-hidden');
+      mapLayerEl.classList.add('depth-2');
+      topicsLayerEl.classList.add('depth-1');
+      casesLayerEl.classList.add('depth-0');
+      break;
+  }
+}
+
+/* =========================================================
+   开屏
+   ========================================================= */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let splashTimer = null;
+let splashDone = false;
+
+function finishSplash() {
+  if (splashDone) return;
+  splashDone = true;
+  clearTimeout(splashTimer);
+  if (state.view !== 'splash') return;
+
+  state.view = 'map';
+  history.replaceState({ app: true, view: 'map' }, '');
+  render();
+}
+
+splashTimer = setTimeout(finishSplash, reduceMotion ? 1500 : 4000);
+splashEl.addEventListener('click', finishSplash);
+
+/* =========================================================
+   地图点击
+   ========================================================= */
+const mapEl = el('map');
+
+mapEl.addEventListener('click', e => {
+  const rect = mapEl.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+  const R = Math.min(rect.width, rect.height) / 2;
+  const ratio = dist / R;
+
+  if (ratio > 1.05) return;
+
+  let regionId;
+  if (ratio <= 0.25)      regionId = 'gba';
+  else if (ratio <= 0.50) regionId = 'cn';
+  else if (ratio <= 0.75) regionId = 'asia';
+  else                    regionId = 'world';
+
+  openRegion(regionId);
+});
+
+/* =========================================================
+   导航
+   ========================================================= */
+function getRegion(id) { return DATA.regions.find(r => r.id === id); }
+
+function openRegion(regionId) {
+  state.region = regionId;
+  state.topic = null;
+  state.view = 'topics';
+
+  renderTopics();
+  render();
+
+  history.pushState({ app: true, view: 'topics', region: regionId }, '');
+  const sa = topicsLayerEl.querySelector('.scroll-area');
+  if (sa) sa.scrollTop = 0;
+}
+
+function openTopic(topicId) {
+  state.topic = topicId;
+  state.view = 'cases';
+
+  renderCases();
+  render();
+
+  history.pushState(
+    { app: true, view: 'cases', region: state.region, topic: topicId },
+    ''
+  );
+  const sa = casesLayerEl.querySelector('.scroll-area');
+  if (sa) sa.scrollTop = 0;
+}
+
+function goBack() { history.back(); }
+
+window.addEventListener('popstate', e => {
+  const st = e.state;
+
+  if (st && st.app) {
+    state.view = st.view;
+    state.region = st.region || null;
+    state.topic  = st.topic  || null;
+
+    if (state.view === 'topics') renderTopics();
+    if (state.view === 'cases') { renderTopics(); renderCases(); }
+    render();
+  } else {
+    state.view = 'map';
+    state.region = null;
+    state.topic = null;
+    render();
+  }
+});
+
+/* =========================================================
+   渲染：话题
+   ========================================================= */
+const ARROW_SVG =
+  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+  'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M19 12H5M12 19l-7-7 7-7"/></svg>';
+
+function renderTopics() {
+  const region = getRegion(state.region);
+  if (!region) return;
+
+  topicsLayerEl.innerHTML =
+    '<div class="topbar">' +
+      '<button class="back-btn" id="topicsBack" type="button" aria-label="返回">' + ARROW_SVG + '返回</button>' +
+      '<span class="crumb">' + escapeHtml(region.name) + '</span>' +
+    '</div>' +
+    '<div class="scroll-area"><div class="topics-cloud" id="topicCloud"></div></div>';
+
+  const cloud = topicsLayerEl.querySelector('#topicCloud');
+  const slots = getSlotPositions(region.topics.length);
+
+  region.topics.forEach((t, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'topic-slot';
+
+    if (slots) {
+      slot.style.left = slots[i].l + '%';
+      slot.style.top  = slots[i].t + '%';
+    } else {
+      slot.style.position = 'relative';
+      slot.style.left = '';
+      slot.style.top = '';
+      slot.style.transform = 'none';
+      slot.style.width = '45%';
+      slot.style.display = 'inline-flex';
+      slot.style.margin = '6px';
+    }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'topic-item weight-' + t.weight;
+
+    const titleHtml = t.lines.map(line => '<span>' + escapeHtml(line) + '</span>').join('');
+    btn.innerHTML =
+      '<span class="topic-code">' + escapeHtml(t.code) + '</span>' +
+      '<span class="topic-title">' + titleHtml + '</span>';
+
+    btn.style.setProperty('--amp', rand(-9, -5).toFixed(1) + 'px');
+    btn.style.setProperty('--dur', rand(1.1, 1.9).toFixed(2) + 's');
+    btn.style.setProperty('--delay', rand(0, 1.6).toFixed(2) + 's');
+
+    btn.addEventListener('click', () => openTopic(t.id));
+    slot.appendChild(btn);
+    cloud.appendChild(slot);
+  });
+
+  topicsLayerEl.querySelector('#topicsBack').addEventListener('click', goBack);
+}
+
+/* =========================================================
+   渲染：案例（<a> 直接跳转，新标签打开）
+   ========================================================= */
+function renderCases() {
+  const region = getRegion(state.region);
+  if (!region) return;
+  const topic = region.topics.find(t => t.id === state.topic);
+  if (!topic) return;
+
+  casesLayerEl.innerHTML =
+    '<div class="topbar">' +
+      '<button class="back-btn" id="casesBack" type="button" aria-label="返回">' + ARROW_SVG + '返回</button>' +
+      '<span class="crumb">' + escapeHtml(topic.code + '　' + joinTitle(topic.lines)) + '</span>' +
+    '</div>' +
+    '<div class="scroll-area"><div class="cases-cloud" id="caseCloud"></div></div>';
+
+  const cloud = casesLayerEl.querySelector('#caseCloud');
+
+  topic.cases.forEach(c => {
+    const url = c.link || searchUrl(c);
+
+    const a = document.createElement('a');
+    a.className = 'case-item';
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+
+    a.innerHTML =
+      (c.org ? '<span class="case-org">' + escapeHtml(c.org) + '</span>' : '') +
+      '<span class="case-name">' + escapeHtml(c.name) + '</span>';
+
+    a.style.setProperty('--mt', rand(0, 20).toFixed(0) + 'px');
+    a.style.setProperty('--amp', rand(-6, -3).toFixed(1) + 'px');
+    a.style.setProperty('--dur', rand(1.3, 2.1).toFixed(2) + 's');
+    a.style.setProperty('--delay', rand(0, 1.6).toFixed(2) + 's');
+
+    cloud.appendChild(a);
+  });
+
+  casesLayerEl.querySelector('#casesBack').addEventListener('click', goBack);
+}
+
+/* =========================================================
+   初始化
+   ========================================================= */
+render();
+</script>
+
+</body>
+</html>
